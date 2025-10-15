@@ -37,25 +37,125 @@ After making a new sketch go to the library and install Adafruit Neopixel. This 
 
 This step sets up the NodeMCU to connect to a WiFi network.
 
+
+
 ```cpp
 
+#include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
+#include <WiFiClient.h>
 
-const char* ssid = "YOUR_WIFI";
-const char* password = "YOUR_PASSWORD";
+// === CONFIGURATIE ===
+char ssid[] = "JOUW_WIFI_NAAM";         // Vul hier de naam van je WiFi in
+char pass[] = "JOUW_WIFI_WACHTWOORD";   // Vul hier je WiFi-wachtwoord in
+
+// TODO: Hier komt straks je boeken-API in plaats van de weer-API
+const char server[] = "openlibrary.org"; // voorbeeld, kan je aanpassen
+String apiPath = "/isbn/VOORBEELD_ISBN.json"; // TODO: Vervang door eigen endpoint of ISBN
+
+WiFiClient client;
+
+#define JSON_BUFF_DIMENSION 8192
+String text;
+
+unsigned long lastConnectionTime = 0;
+const unsigned long postInterval = 10000;  // elke 10 sec
 
 void setup() {
-  Serial.begin(115200);
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi");
+  Serial.begin(9600);
+  while (!Serial) { ; }
+
+  text.reserve(JSON_BUFF_DIMENSION);
+
+  Serial.println("📡 Verbinden met WiFi...");
+  WiFi.begin(ssid, pass);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("\n✅ Connected!");
+  Serial.println("\n✅ WiFi verbonden!");
+
+  // === Testbare API URL printen voor browser ===
+  String testURL = "http://" + String(server) + apiPath;
+  Serial.println("\n🔗 Test deze URL in je browser:");
+  Serial.println(testURL);
 }
 
-void loop() {}
+void loop() {
+  if (millis() - lastConnectionTime > postInterval) {
+    lastConnectionTime = millis();
+    makeHttpRequest();
+  }
+}
+
+void makeHttpRequest() {
+  client.stop();
+
+  if (client.connect(server, 80)) {
+    client.println("GET " + apiPath + " HTTP/1.1");
+    client.println("Host: " + String(server));
+    client.println("Connection: close");
+    client.println();
+
+    // Header overslaan
+    bool headerSkipped = false;
+    text = "";
+    unsigned long timeout = millis();
+    while (client.connected() && millis() - timeout < 10000) {
+      String line = client.readStringUntil('\n');
+      if (!headerSkipped && (line == "\r" || line == "")) {
+        headerSkipped = true;
+        text = client.readString();
+        break;
+      }
+    }
+
+    if (text.length() > 0) {
+      parseJson(text.c_str());
+    } else {
+      Serial.println("⚠️ Fout: Geen JSON-data ontvangen!");
+    }
+
+    client.stop();
+  } else {
+    Serial.println("❌ Fout: Verbinding met server mislukt!");
+  }
+}
+
+void parseJson(const char* jsonString) {
+  DynamicJsonDocument doc(JSON_BUFF_DIMENSION);
+  DeserializationError error = deserializeJson(doc, jsonString);
+  if (error) {
+    Serial.println("⚠️ Fout bij JSON: " + String(error.c_str()));
+    return;
+  }
+
+  // === Hier pas je straks je JSON velden aan op basis van de boeken-API ===
+  // Bijvoorbeeld: title, number_of_pages, author_name etc.
+  String title = doc["title"] | "Onbekende titel";
+  int numberOfPages = doc["number_of_pages"] | 0;
+
+  Serial.println("📖 Boek Titel: " + title);
+  Serial.println("📄 Aantal pagina's: " + String(numberOfPages));
+
+  // Deze if-structuren waren oorspronkelijk voor weer → nu alleen qua tekst aangepast
+  if (numberOfPages == 0) {
+    Serial.println("⚠️ Geen boekgegevens gevonden.");
+    // TODO: hier iets met je hardware doen (bijv. rode LED's)
+  } else if (numberOfPages < 100) {
+    Serial.println("📘 Dun boek — lekker snel te lezen!");
+    // TODO: hardware feedback
+  } else if (numberOfPages >= 100 && numberOfPages < 300) {
+    Serial.println("📗 Gemiddeld boek — goed te doen.");
+    // TODO: hardware feedback
+  } else if (numberOfPages >= 300) {
+    Serial.println("📕 Dik boek — dit wordt een uitdaging!");
+    // TODO: hardware feedback
+  } else {
+    Serial.println("ℹ️ Andere boekinformatie ontvangen.");
+    // TODO: hardware feedback
+  }
+}
 
 ```
 
