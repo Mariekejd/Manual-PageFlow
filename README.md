@@ -26,7 +26,14 @@ The NodeMCU connects to WiFi.
 2. Connect +5V (red) to a 3V pin on the NodeMCU.
 3. Connect G (black) to G next to the 3V pin.
  
-## 🌐 Step 1: Connect to WiFi
+## 🌐 Step 1: New Sketch
+Open Arduino and click on file > new sketch, it should look like this:
+
+<img width="328" height="246" alt="Scherm­afbeelding 2025-10-12 om 19 54 58" src="https://github.com/user-attachments/assets/3a421249-6ed4-4ed4-bd0e-a7b3b1aceaf7" />
+
+After making a new sketch go to the library and install Adafruit Neopixel. This is needed for our LEDS to be included in our code. Be sure to add the right one just like in the picture below.
+
+<img width="278" height="624" alt="Scherm­afbeelding 2025-10-12 om 19 55 41" src="https://github.com/user-attachments/assets/5c6f66d9-9a07-49eb-af93-802c3b7df02f" />
 
 This step sets up the NodeMCU to connect to a WiFi network.
 
