@@ -20,3 +20,35 @@ The NodeMCU connects to WiFi.
 - LED strip
 - WiFi connection
 - Open Library API → https://openlibrary.org/developers/api
+
+## 💡 LED Strip Setup
+1. Connect Din (yellow) to D1 on the NodeMCU.
+2. Connect +5V (red) to a 3V pin on the NodeMCU.
+3. Connect G (black) to G next to the 3V pin.
+ 
+## 🌐 Step 1: Connect to WiFi
+
+This step sets up the NodeMCU to connect to a WiFi network.
+
+```cpp
+
+#include <ESP8266WiFi.h>
+
+const char* ssid = "YOUR_WIFI";
+const char* password = "YOUR_PASSWORD";
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\n✅ Connected!");
+}
+
+void loop() {}
+
+```
+
